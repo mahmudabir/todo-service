@@ -59,7 +59,7 @@ public static class SwaggerExtensions
     public static WebApplication UseSwaggerUi(this WebApplication app)
     {
         var jwtOptions = app.Services.GetRequiredService<IOptions<JwtSettings>>().Value;
-        
+
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {

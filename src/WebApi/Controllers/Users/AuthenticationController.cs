@@ -84,18 +84,19 @@ public class AuthenticationController(
 
     // Requirement alias: POST /api/auth/login
     [HttpPost("login")]
-    public Task<ActionResult<TokenResponse>> LoginAlias([FromBody] TokenRequest request, CancellationToken ct = default)
+    public Task<ActionResult<TokenResponse>> LoginAlias([FromBody] LoginRequest payload, CancellationToken ct = default)
     {
         // Accept JSON payload and forward as password grant
-        request.GrantType ??= "password";
-        return Login(request);
-    }
+        TokenRequest request = new TokenRequest()
+        {
+            Username = payload.Username,
+            Password = payload.Password,
+            GrantType = "password",
+            ClientId = "Softoverse",
+            ClientSecret = "CqrsKit",
+        };
 
-    // Requirement alias: POST /api/auth/signup
-    [HttpPost("signup")]
-    public Task<IActionResult> SignupAlias([FromBody] Shared.Models.Users.User userRegistration, CancellationToken ct = default)
-    {
-        return Register(userRegistration, ct);
+        return Login(request);
     }
 
     private async Task<ActionResult<TokenResponse>> Login(TokenRequest request)
@@ -300,14 +301,14 @@ public class AuthenticationController(
     }
 
     // POST api/Auth/register
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] User userRegistration, CancellationToken ct = default)
+    [HttpPost("signup")]
+    public async Task<IActionResult> Signup([FromBody] User userRegistration, CancellationToken ct = default)
     {
         if (!TryValidateModel(userRegistration))
         {
             var errors = ModelState.ToFluentErrors()!
-                                     .Where(kv => kv.Value != null)
-                                     .ToDictionary(kv => kv.Key, kv => kv.Value!);
+                                   .Where(kv => kv.Value != null)
+                                   .ToDictionary(kv => kv.Key, kv => kv.Value!);
             return BadRequest(Result<bool>.Error()
                                           .WithMessage("Validation failed.")
                                           .WithErrors(errors));
@@ -322,7 +323,7 @@ public class AuthenticationController(
             LockoutEnabled = true,
         };
 
-    var userResult = await userManager.CreateAsync(identityUser, userRegistration.Password ?? string.Empty);
+        var userResult = await userManager.CreateAsync(identityUser, userRegistration.Password ?? string.Empty);
 
         if (!userResult.Succeeded)
         {
@@ -348,8 +349,8 @@ public class AuthenticationController(
         }
 
         var username = GetUsernameFromRefreshToken(request.RefreshToken);
-    var usernameToUse = username ?? request.Username ?? string.Empty;
-    var user = await GetIdentityUserAsync(usernameToUse);
+        var usernameToUse = username ?? request.Username ?? string.Empty;
+        var user = await GetIdentityUserAsync(usernameToUse);
 
         if (user == null)
         {
@@ -373,39 +374,6 @@ public class AuthenticationController(
         return Ok(new
         {
             message = "Logged out successfully."
-        });
-    }
-
-    // POST api/Auth/force-logout
-    [HttpPost("force-logout")]
-    public async Task<IActionResult> ForceLogout([FromBody] ForceLogoutRequest request, CancellationToken ct = default)
-    {
-        // This endpoint would typically be restricted to admin users or the account owner
-        var user = await GetIdentityUserAsync(request.Username);
-
-        if (user == null)
-        {
-            return BadRequest(new
-            {
-                message = "User not found."
-            });
-        }
-
-        // Revoke all active refresh tokens for this user
-        var activeTokens = user.RefreshTokens.Where(x => x.IsActive).ToList();
-
-        foreach (var token in activeTokens)
-        {
-            token.RevokedAt = DateTime.UtcNow;
-            token.ReasonOfRevoke = request.Reason ?? "Administrator-initiated logout";
-            token.RevokedByIp = GetIpAddress();
-        }
-
-        await context.SaveChangesAsync(ct);
-
-        return Ok(new
-        {
-            message = $"Successfully logged out user from {activeTokens.Count} session(s)."
         });
     }
 

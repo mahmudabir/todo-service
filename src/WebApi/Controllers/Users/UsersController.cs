@@ -184,40 +184,6 @@ public class UsersController(ApplicationDbContext context, UserManager<Applicati
         return Ok(result);
     }
 
-    [HttpPost("validate-identity")]
-    [Authorize(Policy = Auth.ApiKeyPolicy)]
-    public async Task<ActionResult<Result<bool>>> ValidateIdentity([FromQuery] string username,
-                                                                   [FromQuery] string email,
-                                                                   [FromQuery] string userId,
-                                                                   CancellationToken ct = default)
-    {
-        //bool byEmail, byUsername, byApplicationUserId;
-        Dictionary<string, bool>? obj = new();
-
-        if (!username.IsNullOrEmpty())
-        {
-            var user = await userManager.FindByNameAsync(username); // Find By Username
-            obj.Add("username", user != null);
-        }
-
-        if (!email.IsNullOrEmpty())
-        {
-            var user = await userManager.FindByEmailAsync(email); // Find By Email
-            obj.Add("email", user != null);
-        }
-
-        if (!userId.IsNullOrEmpty())
-        {
-            var user = await userManager.FindByIdAsync(userId); // Find By ApplicationUserId
-            obj.Add("userId", user != null);
-        }
-
-        Result<Dictionary<string, bool>> result = Result<Dictionary<string, bool>>.Success()
-                                                                                  .WithPayload(obj);
-
-        return Ok(result);
-    }
-
     [HttpPost("deactivate/{username}")]
     public async Task<ActionResult<Result<User>>> DeleteUser(string username, CancellationToken ct = default)
     {

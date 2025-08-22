@@ -2,11 +2,12 @@
 
 using Domain.Abstractions.Database;
 using Domain.Abstractions.Services;
-using Domain.Entities.Cities;
+using Domain.Entities.Todos;
 using Domain.Entities.Users;
 
 using Infrastructure.Extensions;
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -19,7 +20,7 @@ namespace Infrastructure.Database;
 public sealed class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options,
     ILogger<ApplicationDbContext> logger)
-    : IdentityDbContext<ApplicationUser>(options),
+    : IdentityDbContext<ApplicationUser, IdentityRole, string>(options),
       IUnitOfWork
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)

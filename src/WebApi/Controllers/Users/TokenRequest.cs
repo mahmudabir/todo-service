@@ -2,7 +2,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace WebApi.Controllers.Users.Authentications;
+namespace WebApi.Controllers.Users;
 
 public class TokenRequest
 {

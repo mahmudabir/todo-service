@@ -111,7 +111,7 @@ public static class DependencyInjection
     private static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
         // "Environment" => "Development", "Live"
-        string connectionString = configuration.GetConnectionString("Database");
+    string connectionString = configuration.GetConnectionString("Database") ?? throw new Exception("Connection string 'Database' not found");
 
         if (string.IsNullOrEmpty(connectionString))
         {
@@ -120,10 +120,9 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>((serviceProvider, options ) =>
         {
-            options.UseNpgsql(connectionString, npgsqlOptions =>
+            options.UseSqlServer(connectionString, sqlOptions =>
             {
-                npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName)
-                             .EnableRetryOnFailure();
+                sqlOptions.EnableRetryOnFailure();
             });
         });
 
@@ -138,7 +137,7 @@ public static class DependencyInjection
 
     private static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString("Database");
+    string connectionString = configuration.GetConnectionString("Database") ?? throw new Exception("Connection string 'Database' not found");
 
         if (string.IsNullOrEmpty(connectionString))
         {
@@ -146,8 +145,7 @@ public static class DependencyInjection
         }
 
         services
-            .AddHealthChecks()
-            .AddNpgSql(connectionString!);
+            .AddHealthChecks();
 
         return services;
     }

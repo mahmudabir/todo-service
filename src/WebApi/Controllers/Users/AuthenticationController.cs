@@ -22,7 +22,7 @@ using Shared.Settings;
 
 using WebApi.Infrastructure.Extensions;
 
-namespace WebApi.Controllers.Users.Authentications;
+namespace WebApi.Controllers.Users;
 
 [Route("api/auth")]
 [ApiController]
@@ -80,6 +80,22 @@ public class AuthenticationController(
                     });
                 }
         }
+    }
+
+    // Requirement alias: POST /api/auth/login
+    [HttpPost("login")]
+    public Task<ActionResult<TokenResponse>> LoginAlias([FromBody] TokenRequest request, CancellationToken ct = default)
+    {
+        // Accept JSON payload and forward as password grant
+        request.GrantType ??= "password";
+        return Login(request);
+    }
+
+    // Requirement alias: POST /api/auth/signup
+    [HttpPost("signup")]
+    public Task<IActionResult> SignupAlias([FromBody] Shared.Models.Users.User userRegistration, CancellationToken ct = default)
+    {
+        return Register(userRegistration, ct);
     }
 
     private async Task<ActionResult<TokenResponse>> Login(TokenRequest request)
@@ -289,9 +305,12 @@ public class AuthenticationController(
     {
         if (!TryValidateModel(userRegistration))
         {
+            var errors = ModelState.ToFluentErrors()!
+                                     .Where(kv => kv.Value != null)
+                                     .ToDictionary(kv => kv.Key, kv => kv.Value!);
             return BadRequest(Result<bool>.Error()
                                           .WithMessage("Validation failed.")
-                                          .WithErrors(ModelState.ToFluentErrors()));
+                                          .WithErrors(errors));
         }
 
         ApplicationUser identityUser = new ApplicationUser
@@ -303,7 +322,7 @@ public class AuthenticationController(
             LockoutEnabled = true,
         };
 
-        var userResult = await userManager.CreateAsync(identityUser, userRegistration.Password);
+    var userResult = await userManager.CreateAsync(identityUser, userRegistration.Password ?? string.Empty);
 
         if (!userResult.Succeeded)
         {
@@ -329,7 +348,8 @@ public class AuthenticationController(
         }
 
         var username = GetUsernameFromRefreshToken(request.RefreshToken);
-        var user = await GetIdentityUserAsync(username ?? request.Username);
+    var usernameToUse = username ?? request.Username ?? string.Empty;
+    var user = await GetIdentityUserAsync(usernameToUse);
 
         if (user == null)
         {

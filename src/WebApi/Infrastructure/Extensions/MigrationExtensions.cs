@@ -10,7 +10,6 @@ public static class MigrationExtensions
     {
         using IServiceScope scope = app.ApplicationServices.CreateScope();
         using ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        dbContext.Database.EnsureCreated();
         if (dbContext.Database.CanConnect())
         {
             var pendingMigrations = dbContext.Database.GetPendingMigrations();

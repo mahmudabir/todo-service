@@ -1,6 +1,6 @@
 ﻿using Shared.Models.Results;
 
-namespace Softoverse.CqrsKit.Models.Extensions;
+namespace Shared.Extensions;
 
 public static class ErrorExtension
 {

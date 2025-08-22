@@ -28,9 +28,9 @@ public class UsersController(ApplicationDbContext context, UserManager<Applicati
     {
         Expression<Func<ApplicationUser, bool>> predicate = (x) => string.IsNullOrEmpty(q)
             ? true
-            : EF.Functions.ILike(x.UserName, $"%{q}%") ||
-              EF.Functions.ILike(x.Email, $"%{q}%") ||
-              EF.Functions.ILike(x.PhoneNumber, $"%{q}%");
+            : EF.Functions.Like(x.UserName, $"%{q}%") ||
+              EF.Functions.Like(x.Email, $"%{q}%") ||
+              EF.Functions.Like(x.PhoneNumber, $"%{q}%");
 
         var queryable = context.Users
                                .Where(predicate);

@@ -1,4 +1,7 @@
-﻿using Shared.Settings;
+﻿using Application;
+
+using Shared;
+using Shared.Settings;
 
 using WebApi.Infrastructure.Extensions;
 using WebApi.Infrastructure.Middlewares;
@@ -19,6 +22,13 @@ public static class DependencyInjection
 
         services.AddApiControllers()
                 .AddJsonOptions();
+
+        // Register AutoMapper once with all target assemblies. Calling AddAutoMapper multiple times can
+        // override previous configuration, resulting in missing profiles (e.g. Application profiles not found).
+        services.AddAutoMapper(
+            typeof(IApplicationMarker).Assembly,
+            typeof(ISharedMarker).Assembly
+        );
 
         // Shows UseCors with CorsPolicyBuilder.
         services.AddCors(options =>

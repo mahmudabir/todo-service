@@ -1,4 +1,4 @@
-﻿using Domain.Entities.Cities;
+﻿using Domain.Entities.Todos;
 
 namespace Domain.Abstractions.Database.Repositories;
 

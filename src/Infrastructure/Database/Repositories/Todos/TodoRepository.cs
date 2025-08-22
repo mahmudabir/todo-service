@@ -1,5 +1,5 @@
 ﻿using Domain.Abstractions.Database.Repositories;
-using Domain.Entities.Cities;
+using Domain.Entities.Todos;
 
 using Microsoft.Extensions.Logging;
 

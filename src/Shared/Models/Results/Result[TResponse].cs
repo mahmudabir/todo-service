@@ -1,4 +1,4 @@
-﻿using Softoverse.CqrsKit.Models.Extensions;
+﻿using Shared.Extensions;
 
 namespace Shared.Models.Results;
 

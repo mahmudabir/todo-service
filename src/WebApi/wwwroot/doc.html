@@ -1,0 +1,260 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a192f 0%, #0d2f4a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        .container {
+            text-align: center;
+            color: white;
+            opacity: 0;
+            transform: translateY(20px) rotateX(20deg);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #4a90e2, #63b3ed);
+            animation: lineGrow 1s ease-out 0.8s forwards;
+        }
+
+        .options {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .option-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            width: 250px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease-in,
+            background-color 0.3s ease-in,
+            box-shadow 0.3s ease-in;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px) rotateY(10deg);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease-out,
+            background-color 0.15s ease-out,
+            box-shadow 0.15s ease-out;
+        }
+
+        /* Faster return to original state */
+        .option-card:not(:hover) {
+            transform: translateY(0) rotateY(0);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+            transition: all 0.15s ease-out;
+        }
+
+        .option-card:active {
+            transform: scale(0.98) rotateY(0deg);
+            transition: transform 0.1s ease-out;
+        }
+
+        .option-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.2),
+                    transparent
+            );
+            transition: 0.3s ease-in;
+        }
+
+        .option-card:hover::before {
+            left: 100%;
+            transition: 0.3s ease-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(74, 144, 226, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 144, 226, 0);
+            }
+        }
+
+        .option-card:hover {
+            animation: pulse 1.2s infinite;
+        }
+
+        .option-card:not(:hover) {
+            animation: none;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        p {
+            font-size: 1rem;
+            opacity: 0;
+            line-height: 1.5;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards 1s;
+        }
+
+        .background-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, #4a90e2, transparent);
+            animation: float 20s infinite linear;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(100px, 50px) scale(1.1) rotate(180deg);
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translate(0, 0) scale(1) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes lineGrow {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="background-animation" id="backgroundAnimation"></div>
+<div class="container">
+    <h1>Choose Your Documentation</h1>
+    <div class="options">
+        <div class="option-card" onclick="navigate('swagger/index.html')">
+            <h2>Swagger</h2>
+            <p>Interactive API documentation with OpenAPI specification. Perfect for testing and exploring
+                endpoints.</p>
+        </div>
+        <div class="option-card" onclick="navigate('scalar/v1')">
+            <h2>Scalar</h2>
+            <p>Modern, beautiful API reference documentation with rich features and customization options.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Background circles with fixed positions
+    const circleConfigs = [
+        { size: 200, left: '10%', top: '10%', delay: 0 },
+        { size: 300, left: '70%', top: '20%', delay: 1 },
+        { size: 250, left: '20%', top: '60%', delay: 2 },
+        { size: 180, left: '80%', top: '70%', delay: 0 },
+        { size: 220, left: '40%', top: '30%', delay: 2 },
+        { size: 280, left: '60%', top: '50%', delay: 1 },
+        { size: 150, left: '30%', top: '80%', delay: 0 },
+        { size: 190, left: '90%', top: '40%', delay: 2 }
+    ];
+
+    const backgroundAnimation = document.getElementById('backgroundAnimation');
+
+    circleConfigs.forEach(config => {
+        const circle = document.createElement('div');
+        circle.classList.add('circle');
+        circle.style.width = config.size + 'px';
+        circle.style.height = config.size + 'px';
+        circle.style.left = config.left;
+        circle.style.top = config.top;
+        circle.style.animationDelay = config.delay + 's';
+        backgroundAnimation.appendChild(circle);
+    });
+
+    // Page transition
+    function navigate(path) {
+        window.location.href = path;
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Application\Application.csproj"/>
+        <ProjectReference Include="..\Infrastructure\Infrastructure.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Client"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="OpenTelemetry" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+        <PackageReference Include="Serilog.AspNetCore"/>
+        <PackageReference Include="Serilog.Enrichers.Span" />
+        <PackageReference Include="Serilog.Settings.Configuration"/>
+        <PackageReference Include="Serilog.Sinks.Seq"/>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.details\{FeatureName}.details.component.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.details\{FeatureName}.details.component.scss" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.details\{FeatureName}.details.component.ts" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.form\{FeatureName}.form.component.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.form\{FeatureName}.form.component.scss" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.form\{FeatureName}.form.component.ts" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.list\{FeatureName}.list.component.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.list\{FeatureName}.list.component.scss" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.list\{FeatureName}.list.component.ts" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\models\{FeatureName}.model.ts" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\services\{FeatureName}.service.endpoints.ts" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\services\{FeatureName}.service.ts" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\{FeatureName}.routes.ts" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\Mappers\{FeatureName}s\{FeatureName}Mapper.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Create\{FeatureName}CreateCommand.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Create\{FeatureName}CreateCommandHandler.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Create\{FeatureName}CreateValidator.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Delete\{FeatureName}DeleteCommand.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Delete\{FeatureName}DeleteCommandHandler.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\GetById\{FeatureName}GetByIdQuery.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\GetById\{FeatureName}GetByIdQueryHandler.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Get\{FeatureName}GetQuery.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Get\{FeatureName}GetQueryHandler.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Patch\{FeatureName}PatchCommand.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Patch\{FeatureName}PatchCommandHandler.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Update\{FeatureName}UpdateCommand.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Update\{FeatureName}UpdateCommandHandler.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Update\{FeatureName}UpdateValidator.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Domain\Abstractions\Database\Repositories\I{FeatureName}Repository.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Domain\Entities\{FeatureName}s\{FeatureName}.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Domain\Entities\{FeatureName}s\{FeatureName}Errors.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Infrastructure\Database\{FeatureName}s\{FeatureName}Configuration.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Infrastructure\Database\{FeatureName}s\{FeatureName}Repository.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Shared\Models\{FeatureName}s\{FeatureName}ViewModel.cs" />
+      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\WebApi\Controllers\{FeatureName}s\{FeatureName}sController.cs" />
+    </ItemGroup>
+
+</Project>

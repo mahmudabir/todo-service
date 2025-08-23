@@ -1,0 +1,1427 @@
+{
+	"info": {
+		"_postman_id": "063997bc-d9ee-4db0-90eb-e079f4dc663d",
+		"name": "Todo Web API",
+		"description": "<div align=\"center\">\n\t<h1>Todo Service (ASP.NET Core 9)</h1>\n\t<p>A layered, modular Todo REST API showcasing clean architecture style (Domain / Application / Infrastructure / WebApi / Shared) with ASP.NET Core Identity, JWT authentication (access + refresh tokens), EF Core, Serilog logging, validation, pagination, and OpenAPI/Swagger.</p>\n</div>\n\n## Table of Contents\n- Overview\n- Architecture\n- Features\n- Tech Stack\n- Getting Started\n\t- Prerequisites\n\t- Clone & Restore\n\t- Database & Migrations\n\t- Run the API\n\t- Environment / Configuration\n- Seeded Users (Test Credentials)\n- Authentication & Authorization\n\t- Password Grant (Form) `/api/auth/token`\n\t- Login Alias (JSON) `/api/auth/login`\n\t- Refresh Token `/api/auth/token`\n\t- Signup `/api/auth/signup`\n- Users API\n- Todos API\n- Pagination & Sorting\n- Validation\n- Logging & Observability\n- Roadmap / Ideas\n\n---\n\n## Overview\nThis service exposes endpoints to manage users and their todo items. It demonstrates:\n* Clean separation of concerns via layered projects.\n* JWT bearer auth with access + refresh tokens, optional single-login enforcement.\n* ASP.NET Core Identity for user management.\n* EF Core (code-first) with migrations & seeding.\n* FluentValidation for request models.\n* Consistent `Result<T>` response envelope and error shape.\n* Pagination, sorting, and filtering helpers.\n* Serilog structured logging to console & rolling files.\n* OpenAPI (Swagger UI) in Development.\n\n## Architecture\nProject solution folders:\n* `Domain` – Entities, abstractions, domain models.\n* `Application` – DTOs, services (business logic), mapping profiles, validators.\n* `Infrastructure` – EF Core `ApplicationDbContext`, migrations, repositories, identity, authentication helpers.\n* `Shared` – Cross-cutting models, enums, constants, pagination, result wrappers.\n* `WebApi` – Presentation layer (controllers, DI wiring, middleware, configuration).\n\n## Features\n* JWT (HS256) Access + Refresh, rotation/renewal logic, absolute lifetime & revocation.\n* Lockout policy (max failed attempts, lockout duration) configured in `appsettings.json` (see `JwtSettings.MaximumFailedAccessCount`, `UserLockoutMinutes`).\n* Device info & IP capture for refresh tokens.\n* Optional single-login or single-refresh-token strategies (toggle via settings).\n* CRUD for Todos with validation, pagination & sorting.\n* User management (query, create, update, (de)activate, signup, auth token issuing).\n\n## Tech Stack\n* .NET 9 (`net9.0` TargetFramework)\n* ASP.NET Core Web API\n* Entity Framework Core + SQL Server (LocalDB default)\n* ASP.NET Core Identity\n* FluentValidation\n* Serilog (Console + File sinks)\n* OpenTelemetry packages (instrumentation ready)\n* Swashbuckle (Swagger / OpenAPI)\n\n## Getting Started\n### 1. Prerequisites\nInstall locally:\n* .NET SDK 9.0\n* SQL Server or LocalDB (default connection uses `(localdb)\\\\MSSQLLocalDB`)\n* (Optional) Docker if you adapt to containerized SQL.\n\n### 2. Clone & Restore\n```powershell\ngit clone https://github.com/mahmudabir/todo-service.git\ncd todo-service\ndotnet restore\n```\n\n### 3. Database & Migrations\nBy default the API automatically applies migrations at startup in Development (`app.ApplyMigrations();`). To apply manually:\n```powershell\ndotnet ef database update --project src/Infrastructure --startup-project src/WebApi\n```\nAdjust connection string in `src/WebApi/appsettings.Development.json` or `appsettings.json` (key: `ConnectionStrings:Database`).\n\n### 4. Run the API\n```powershell\ndotnet run --project src/WebApi\n```\nThe API will typically listen on https://localhost:5001 and http://localhost:5000 (exact ports depend on your profile). Swagger UI (Development) at `/swagger`.\n\n### 5. Environment / Configuration\nKey section: `JwtSettings` in `appsettings.json`:\n```jsonc\n\"JwtSettings\": {\n\t\"Key\": \"secret_key.secret_key.secret_key\",\n\t\"Issuer\": \"SoftoverseCqrsKitApi\",\n\t\"Audience\": \"SoftoverseCqrsKitUser\",\n\t\"AccessTokenExpirationMinutes\": 20,\n\t\"RefreshTokenExpirationMinutes\": 120,\n\t\"ExtendRefreshTokenEverytime\": true,\n\t\"RevokeRefreshTokenAfterAbsoluteExpiration\": true,\n\t\"RefreshTokenAbsoluteExpirationMinutes\": 43200,\n\t\"RemoveExpiredRefreshTokenBeforeDays\": 7,\n\t\"SingleRefreshTokenPerUser\": false,\n\t\"SingleLoginEnabled\": false,\n\t\"MaximumFailedAccessCount\": 3,\n\t\"UserLockoutMinutes\": 60,\n\t\"ClientId\": \"Softoverse\",\n\t\"ClientSecret\": \"CqrsKit\",\n\t\"TokenUrl\": \"http://localhost:5000/api/auth/token\",\n\t\"TokenRefreshUrl\": \"http://localhost:5000/api/auth/token\"\n}\n```\n\n## Seeded Users (Test Credentials)\nMigration `20250823141729_User_Seed` inserts two users:\n| Username | Email             | Password (raw) |\n|----------|-------------------|----------------|\n| user1    | user1@example.com | Pass@123       |\n| user2    | user2@example.com | Pass@123       |\n\n> NOTE: Password hash in migration corresponds to the demonstrated raw password `Pass@123`. If login fails, reset passwords via Identity management or recreate migration.\n\n## Authentication & Authorization\n{{vault:bearer-token}}: obtain Access + Refresh tokens, then include:\n```\nAuthorization: Bearer {access_token}\n```\n\n### Grant Types\nTwo flows exposed via the same `/api/auth/token` endpoint:\n1. Password grant (form fields)\n2. Refresh token grant\n\nAlias `/api/auth/login` accepts JSON body for convenience.\n\n### 1. Password Grant (Form) – POST `/api/auth/token`\nContent-Type: `application/x-www-form-urlencoded` (or multipart form)\nForm fields:\n```\ngrant_type=password&username=user1&password=Pass@123&client_id=Softoverse&client_secret=CqrsKit\n```\nSuccessful Response (200):\n```jsonc\n{\n\t\"message\": \"Login Successful.\",\n\t\"accessToken\": \"...\",\n\t\"refreshToken\": \"...\",\n\t\"tokenType\": \"Bearer\",\n\t\"expiresIn\": 1200,\n\t\"refreshExpiresIn\": 7200,\n\t\"login\": { \"accessToken\": \"...\", \"tokenType\": \"Bearer\" },\n\t\"roles\": []\n}\n```\n\nCommon Errors:\n* 400 Invalid Username or Password.\n* 400 Already logged in (if `SingleLoginEnabled` true).\n* 400 Account locked (after failed attempts reaches threshold).\n\n### 1a. JSON Login Alias – POST `/api/auth/login`\nBody:\n```json\n{ \"username\": \"user1\", \"password\": \"Pass@123\" }\n```\nResponse: same as password grant above.\n\n### 2. Refresh Token – POST `/api/auth/token`\nForm fields:\n```\ngrant_type=refresh_token&refresh_token={refreshToken}\n```\nReturns new access token (and possibly extended refresh token depending on settings).\nErrors: 401 if token revoked/expired; 400 if missing or invalid.\n\n### 3. Signup – POST `/api/auth/signup`\nJSON Body:\n```json\n{\n\t\"username\": \"newuser\",\n\t\"email\": \"newuser@example.com\",\n\t\"phoneNumber\": \"+1000000000\",\n\t\"password\": \"Pass@123\",\n\t\"dateOfBirth\": \"1990-01-01\"\n}\n```\nResponses:\n* 200 Success wrapper with message \"Registered successfully.\" or validation errors.\n\n## Users API (Requires Bearer Token)\nBase Route: `/api/users` (This api were just to manupulate user data via API)\n\n| Method | Route | Description | Query/Body |\n|--------|-------|-------------|------------|\n| GET | `/api/users` | List users (filter by `q`) | `?q=term` (optional) |\n| GET | `/api/users/{username}` | Get by username |  |\n| POST | `/api/users` | Create user | `{ username, email, phoneNumber, password }` |\n| PUT | `/api/users/{username}` | Update (email/phone/password) | `{ username, email, phoneNumber, password? }` |\n| POST | `/api/users/deactivate/{username}` | Lock user (soft delete) |  |\n| POST | `/api/users/activate/{username}` | Unlock user |  |\n\nResponses use `Result<T>` envelope with `payload`, `message`, optional `errors`.\n\n## Todos API (Requires Bearer Token)\nBase Route: `/api/todos`\n\n| Method | Route | Description | Body / Params |\n|--------|-------|-------------|---------------|\n| GET | `/api/todos` | Paged list | Query: `query`, pagination + sorting |\n| GET | `/api/todos/{id}` | Single todo | Path id (long) |\n| POST | `/api/todos` | Create | `TodoCreateViewModel` (e.g. `{ \"title\": \"Test\", \"description\": \"...\" }`) |\n| PUT | `/api/todos/{id}` | Update | `TodoUpdateViewModel` |\n| DELETE | `/api/todos/{id}` | Delete | Path id |\n\n### Pagination & Sorting\nThe `GET /api/todos` endpoint accepts:\n* `pageNumber` (default 1)\n* `pageSize` (default e.g. 10/20 depending on implementation)\n* Sort parameters via `sortable` model (e.g. `sortBy=createdAt&sortOrder=desc`).\nResponse returns `Result<PagedData<TodoViewModel>>` containing page metadata + items.\n\n## Validation\n* Uses FluentValidation for todo create/update models.\n* Validation failures return a `Result.Error` with `errors` dictionary.\n\n## Logging & Observability\n* Serilog writes structured logs to console and `logs/log-<date>.log` (hourly rolling, retention 168 files ~ 7 days).\n* OpenTelemetry packages are referenced — you can configure an OTLP endpoint to export traces/metrics/logs.\n\n## Error Handling\nGlobal exception handling middleware (invoked via `app.UseExceptionHandler();`) standardizes error responses.\n\n## Security Notes\n* Replace `JwtSettings:Key` with a secure secret in production (minimum 32 random bytes).\n* Enable HTTPS enforcement and consider HSTS.\n* Consider enabling `SingleLoginEnabled` and/or `SingleRefreshTokenPerUser` for stricter session management.\n* Rotate secrets and implement refresh token revocation list persistence if scaling out.\n\n---\n### Quick Test Flow\n1. Start API.\n2. Obtain token:\n\t ```powershell\n\t # Form URL encoded example using PowerShell Invoke-RestMethod\n\t Invoke-RestMethod -Method Post -Uri http://localhost:5000/api/auth/token -Body @{grant_type='password';username='user1';password='Pass@123';client_id='Softoverse';client_secret='CqrsKit'}\n\t ```\n3. Call Todos with returned access token:\n\t ```powershell\n\t $token = '<ACCESS_TOKEN>'\n\t Invoke-RestMethod -Headers @{ Authorization = \"Bearer $token\" } -Uri http://localhost:5000/api/todos\n\t ```\n",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13714303",
+		"_collection_link": "https://www.postman.com/amabirmahmud/workspace/todo-service/collection/13714303-063997bc-d9ee-4db0-90eb-e079f4dc663d?action=share&source=collection_link&creator=13714303"
+	},
+	"item": [
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "Todos",
+					"item": [
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "/api/Todos/:id",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/api/Todos/:id",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"Todos",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "1",
+													"description": "(Required) "
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Todos/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Todos",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"payload\": {\n    \"title\": \"string\",\n    \"id\": 8759,\n    \"description\": \"string\",\n    \"status\": \"Canceled\",\n    \"dueDateUtc\": \"1963-09-12T07:47:53.266Z\",\n    \"priority\": 2,\n    \"isCompleted\": false,\n    \"createdAtUtc\": \"2000-06-22T05:07:37.891Z\",\n    \"updatedAtUtc\": \"1986-07-07T03:24:23.334Z\"\n  },\n  \"message\": \"string\",\n  \"isSuccess\": true,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_2\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+										}
+									]
+								},
+								{
+									"name": "/api/Todos/:id",
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"string\",\n  \"id\": 6489,\n  \"description\": \"s\",\n  \"status\": \"Pending\",\n  \"dueDateUtc\": \"1974-04-01T05:21:13.424Z\",\n  \"priority\": 4,\n  \"isCompleted\": true\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/api/Todos/:id",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"Todos",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "915",
+													"description": "(Required) "
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"title\": \"string\",\n  \"id\": 6489,\n  \"description\": \"s\",\n  \"status\": \"Pending\",\n  \"dueDateUtc\": \"1974-04-01T05:21:13.424Z\",\n  \"priority\": 4,\n  \"isCompleted\": true\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Todos/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Todos",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"payload\": {\n    \"title\": \"string\",\n    \"id\": 8759,\n    \"description\": \"string\",\n    \"status\": \"Canceled\",\n    \"dueDateUtc\": \"1963-09-12T07:47:53.266Z\",\n    \"priority\": 2,\n    \"isCompleted\": false,\n    \"createdAtUtc\": \"2000-06-22T05:07:37.891Z\",\n    \"updatedAtUtc\": \"1986-07-07T03:24:23.334Z\"\n  },\n  \"message\": \"string\",\n  \"isSuccess\": true,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_2\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+										}
+									]
+								},
+								{
+									"name": "/api/Todos/:id",
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/api/Todos/:id",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"Todos",
+												":id"
+											],
+											"variable": [
+												{
+													"key": "id",
+													"value": "915",
+													"description": "(Required) "
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Todos/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Todos",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"payload\": true,\n  \"message\": \"string\",\n  \"isSuccess\": false,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "/api/Todos",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/Todos?query=string&OrderBy=priority&IsAscending=true",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"Todos"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "string"
+										},
+										{
+											"key": "AsPage",
+											"value": "true",
+											"disabled": true
+										},
+										{
+											"key": "PageNumber",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "PageSize",
+											"value": "20",
+											"disabled": true
+										},
+										{
+											"key": "OrderBy",
+											"value": "priority"
+										},
+										{
+											"key": "IsAscending",
+											"value": "true"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Todos?query=string&AsPage=true&PageNumber=6694&PageSize=6694&OrderBy=password&IsAscending=true",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Todos"
+											],
+											"query": [
+												{
+													"key": "query",
+													"value": "string"
+												},
+												{
+													"key": "AsPage",
+													"value": "true"
+												},
+												{
+													"key": "PageNumber",
+													"value": "6694"
+												},
+												{
+													"key": "PageSize",
+													"value": "6694"
+												},
+												{
+													"key": "OrderBy",
+													"value": "password"
+												},
+												{
+													"key": "IsAscending",
+													"value": "true"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"payload\": {\n    \"content\": [\n      {\n        \"title\": \"string\",\n        \"id\": 4256,\n        \"description\": \"string\",\n        \"status\": \"InProgress\",\n        \"dueDateUtc\": \"1991-03-18T15:18:56.547Z\",\n        \"priority\": 3,\n        \"isCompleted\": true,\n        \"createdAtUtc\": \"1996-12-14T01:46:21.324Z\",\n        \"updatedAtUtc\": \"1979-01-24T03:03:38.679Z\"\n      },\n      {\n        \"title\": \"string\",\n        \"id\": 7234,\n        \"description\": \"string\",\n        \"status\": \"Pending\",\n        \"dueDateUtc\": \"1971-04-23T11:10:25.523Z\",\n        \"priority\": 4,\n        \"isCompleted\": false,\n        \"createdAtUtc\": \"1995-05-23T02:33:25.755Z\",\n        \"updatedAtUtc\": \"2007-02-02T17:25:54.806Z\"\n      }\n    ],\n    \"pageNumber\": 7787,\n    \"pageSize\": 9101,\n    \"totalPage\": 5034,\n    \"totalRecord\": 4641\n  },\n  \"message\": \"string\",\n  \"isSuccess\": true,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+								}
+							]
+						},
+						{
+							"name": "/api/Todos",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"strin\",\n  \"description\": \"string\",\n  \"dueDateUtc\": \"1980-01-22T13:48:00.461Z\",\n  \"priority\": 3\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/Todos",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"Todos"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"strin\",\n  \"description\": \"string\",\n  \"dueDateUtc\": \"1980-01-22T13:48:00.461Z\",\n  \"priority\": 3\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Todos",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Todos"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"payload\": {\n    \"title\": \"string\",\n    \"id\": 8759,\n    \"description\": \"string\",\n    \"status\": \"Canceled\",\n    \"dueDateUtc\": \"1963-09-12T07:47:53.266Z\",\n    \"priority\": 2,\n    \"isCompleted\": false,\n    \"createdAtUtc\": \"2000-06-22T05:07:37.891Z\",\n    \"updatedAtUtc\": \"1986-07-07T03:24:23.334Z\"\n  },\n  \"message\": \"string\",\n  \"isSuccess\": true,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_2\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "auth",
+					"item": [
+						{
+							"name": "token",
+							"item": [
+								{
+									"name": "/api/auth/token",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "Username",
+													"value": "refresh_token"
+												},
+												{
+													"key": "Password",
+													"value": "password"
+												},
+												{
+													"key": "refresh_token",
+													"value": "password"
+												},
+												{
+													"key": "Scope",
+													"value": "password"
+												},
+												{
+													"key": "ClientId",
+													"value": "refresh_token"
+												},
+												{
+													"key": "ClientSecret",
+													"value": "refresh_token"
+												},
+												{
+													"key": "Authorization",
+													"value": "password"
+												},
+												{
+													"key": "grant_type",
+													"value": "refresh_token"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{base_url}}/api/auth/token",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"auth",
+												"token"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/x-www-form-urlencoded"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "urlencoded",
+													"urlencoded": [
+														{
+															"key": "Username",
+															"value": "refresh_token"
+														},
+														{
+															"key": "Password",
+															"value": "password"
+														},
+														{
+															"key": "refresh_token",
+															"value": "password"
+														},
+														{
+															"key": "Scope",
+															"value": "password"
+														},
+														{
+															"key": "ClientId",
+															"value": "refresh_token"
+														},
+														{
+															"key": "ClientSecret",
+															"value": "refresh_token"
+														},
+														{
+															"key": "Authorization",
+															"value": "password"
+														},
+														{
+															"key": "grant_type",
+															"value": "refresh_token"
+														}
+													]
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/auth/token",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"auth",
+														"token"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"expires_in\": 1983.4124022475662,\n  \"refresh_expires_in\": 7960.0590314237315,\n  \"refresh_token\": \"stri\",\n  \"login\": {\n    \"access_token\": \"string\",\n    \"token_type\": \"string\"\n  },\n  \"message\": \"string\",\n  \"roles\": [\n    \"string\",\n    \"string\"\n  ],\n  \"access_token\": \"string\",\n  \"token_type\": \"string\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "login",
+							"item": [
+								{
+									"name": "/api/auth/login",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"username\": \"string\",\n  \"password\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/api/auth/login",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"auth",
+												"login"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"username\": \"string\",\n  \"password\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/auth/login",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"auth",
+														"login"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"expires_in\": 1983.4124022475662,\n  \"refresh_expires_in\": 7960.0590314237315,\n  \"refresh_token\": \"stri\",\n  \"login\": {\n    \"access_token\": \"string\",\n    \"token_type\": \"string\"\n  },\n  \"message\": \"string\",\n  \"roles\": [\n    \"string\",\n    \"string\"\n  ],\n  \"access_token\": \"string\",\n  \"token_type\": \"string\"\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "signup",
+							"item": [
+								{
+									"name": "/api/auth/signup",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"string\",\n  \"username\": \"string\",\n  \"id\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"dateOfBirth\": \"1986-08-05\",\n  \"password\": \"string\",\n  \"isLocked\": true\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/api/auth/signup",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"auth",
+												"signup"
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"email\": \"string\",\n  \"username\": \"string\",\n  \"id\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"dateOfBirth\": \"1986-08-05\",\n  \"password\": \"string\",\n  \"isLocked\": true\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/auth/signup",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"auth",
+														"signup"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"body": null
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Users",
+					"item": [
+						{
+							"name": "{username}",
+							"item": [
+								{
+									"name": "/api/Users/:username",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/api/Users/:username",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"Users",
+												":username"
+											],
+											"variable": [
+												{
+													"key": "username",
+													"value": "string",
+													"description": "(Required) "
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Users/:username",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Users",
+														":username"
+													],
+													"variable": [
+														{
+															"key": "username"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"payload\": {\n    \"email\": \"string\",\n    \"username\": \"string\",\n    \"id\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"dateOfBirth\": \"2007-06-12\",\n    \"password\": \"string\",\n    \"isLocked\": true\n  },\n  \"message\": \"string\",\n  \"isSuccess\": false,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+										}
+									]
+								},
+								{
+									"name": "/api/Users/:username",
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"string\",\n  \"username\": \"string\",\n  \"id\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"dateOfBirth\": \"1986-08-05\",\n  \"password\": \"string\",\n  \"isLocked\": true\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/api/Users/:username",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"Users",
+												":username"
+											],
+											"variable": [
+												{
+													"key": "username",
+													"value": "string",
+													"description": "(Required) "
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "OK",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													},
+													{
+														"key": "Authorization",
+														"value": "Bearer <token>",
+														"description": "Added as a part of security scheme: bearer"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"email\": \"string\",\n  \"username\": \"string\",\n  \"id\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"dateOfBirth\": \"1986-08-05\",\n  \"password\": \"string\",\n  \"isLocked\": true\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Users/:username",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Users",
+														":username"
+													],
+													"variable": [
+														{
+															"key": "username"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"payload\": {\n    \"email\": \"string\",\n    \"username\": \"string\",\n    \"id\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"dateOfBirth\": \"2007-06-12\",\n    \"password\": \"string\",\n    \"isLocked\": true\n  },\n  \"message\": \"string\",\n  \"isSuccess\": false,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "deactivate",
+							"item": [
+								{
+									"name": "{username}",
+									"item": [
+										{
+											"name": "/api/Users/deactivate/:username",
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{base_url}}/api/Users/deactivate/:username",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"Users",
+														"deactivate",
+														":username"
+													],
+													"variable": [
+														{
+															"key": "username",
+															"value": "string",
+															"description": "(Required) "
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "text/plain"
+															},
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Users/deactivate/:username",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Users",
+																"deactivate",
+																":username"
+															],
+															"variable": [
+																{
+																	"key": "username"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"payload\": {\n    \"email\": \"string\",\n    \"username\": \"string\",\n    \"id\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"dateOfBirth\": \"2007-06-12\",\n    \"password\": \"string\",\n    \"isLocked\": true\n  },\n  \"message\": \"string\",\n  \"isSuccess\": false,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "activate",
+							"item": [
+								{
+									"name": "{username}",
+									"item": [
+										{
+											"name": "/api/Users/activate/:username",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"url": {
+													"raw": "{{base_url}}/api/Users/activate/:username",
+													"host": [
+														"{{base_url}}"
+													],
+													"path": [
+														"api",
+														"Users",
+														"activate",
+														":username"
+													],
+													"variable": [
+														{
+															"key": "username",
+															"value": "string",
+															"description": "(Required) "
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"name": "OK",
+													"originalRequest": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Authorization",
+																"value": "Bearer <token>",
+																"description": "Added as a part of security scheme: bearer"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Users/activate/:username",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Users",
+																"activate",
+																":username"
+															],
+															"variable": [
+																{
+																	"key": "username"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"body": null
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "/api/Users",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/Users?q=",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"Users"
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Users?q=",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Users"
+											],
+											"query": [
+												{
+													"key": "q",
+													"value": ""
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"payload\": [\n    {\n      \"email\": \"string\",\n      \"username\": \"string\",\n      \"id\": \"string\",\n      \"phoneNumber\": \"string\",\n      \"dateOfBirth\": \"1986-11-15\",\n      \"password\": \"string\",\n      \"isLocked\": false\n    },\n    {\n      \"email\": \"string\",\n      \"username\": \"string\",\n      \"id\": \"string\",\n      \"phoneNumber\": \"string\",\n      \"dateOfBirth\": \"2005-11-29\",\n      \"password\": \"string\",\n      \"isLocked\": false\n    }\n  ],\n  \"message\": \"string\",\n  \"isSuccess\": false,\n  \"isFailure\": false,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+								}
+							]
+						},
+						{
+							"name": "/api/Users",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"string\",\n  \"username\": \"string\",\n  \"id\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"dateOfBirth\": \"1986-08-05\",\n  \"password\": \"string\",\n  \"isLocked\": true\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/Users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"Users"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer <token>",
+												"description": "Added as a part of security scheme: bearer"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"string\",\n  \"username\": \"string\",\n  \"id\": \"string\",\n  \"phoneNumber\": \"string\",\n  \"dateOfBirth\": \"1986-08-05\",\n  \"password\": \"string\",\n  \"isLocked\": true\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Users",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Users"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"payload\": {\n    \"email\": \"string\",\n    \"username\": \"string\",\n    \"id\": \"string\",\n    \"phoneNumber\": \"string\",\n    \"dateOfBirth\": \"2007-06-12\",\n    \"password\": \"string\",\n    \"isLocked\": true\n  },\n  \"message\": \"string\",\n  \"isSuccess\": false,\n  \"isFailure\": true,\n  \"additionalProperties\": {},\n  \"errors\": {\n    \"key_0\": [\n      \"string\",\n      \"string\"\n    ],\n    \"key_1\": [\n      \"string\",\n      \"string\"\n    ]\n  }\n}"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "password",
+				"value": "{{password2}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username2}}",
+				"type": "string"
+			},
+			{
+				"key": "accessTokenUrl",
+				"value": "{{token_url}}",
+				"type": "string"
+			},
+			{
+				"key": "scope",
+				"value": "",
+				"type": "string"
+			},
+			{
+				"key": "clientSecret",
+				"value": "{{client_secret}}",
+				"type": "string"
+			},
+			{
+				"key": "clientId",
+				"value": "{{client_id}}",
+				"type": "string"
+			},
+			{
+				"key": "grant_type",
+				"value": "password_credentials",
+				"type": "string"
+			},
+			{
+				"key": "tokenName",
+				"value": "Token",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000/"
+		}
+	]
+}

@@ -7,6 +7,7 @@
 - Overview
 - Architecture
 - Features
+ - OAuth2 Implementation
 - Tech Stack
 - Getting Started
 	- Prerequisites
@@ -51,6 +52,7 @@ Project solution folders:
 
 ## Features
 * JWT (HS256) Access + Refresh, rotation/renewal logic, absolute lifetime & revocation.
+* OAuth2 Password (Resource Owner Password Credentials) flow exposed in Swagger & Postman for one-click token retrieval.
 * Lockout policy (max failed attempts, lockout duration) configured in `appsettings.json` (see `JwtSettings.MaximumFailedAccessCount`, `UserLockoutMinutes`).
 * Device info & IP capture for refresh tokens.
 * Optional single-login or single-refresh-token strategies (toggle via settings).
@@ -140,6 +142,17 @@ Two flows exposed via the same `/api/auth/token` endpoint:
 
 Alias `/api/auth/login` accepts JSON body for convenience.
 
+### OAuth2 (Password Flow) Implementation
+The API registers an OAuth2 security scheme named `oauth2` (Password flow) in Swagger (`SwaggerExtensions`). Configuration points to `JwtSettings:TokenUrl` & `JwtSettings:TokenRefreshUrl`. Scopes (example): `apiScope`, `uiScope`. While scopes are optional in current authorization checks (no scope-based enforcement yet), they illustrate how to extend fine-grained access later.
+
+In Swagger UI (Development):
+1. Click Authorize.
+2. Choose oauth2 scheme.
+3. Enter seeded username & password (`user1` / `Pass@123`).
+4. (Client credentials auto-filled) Obtain token; Swagger persists authorization for Try-It-Out calls.
+
+This mirrors a Resource Owner Password Credentials flow (deprecated in formal OAuth 2.1 drafts, but intentionally implemented here for demonstration / rapid testing). A future enhancement could add Authorization Code + PKCE.
+
 ### 1. Password Grant (Form) – POST `/api/auth/token`
 Content-Type: `application/x-www-form-urlencoded` (or multipart form)
 Form fields:
@@ -193,6 +206,17 @@ JSON Body:
 ```
 Responses:
 * 200 Success wrapper with message "Registered successfully." or validation errors.
+
+### Postman Collection (Pre-configured OAuth2)
+A Postman collection (`Todo Web API.postman_collection.json`) and environment (`Todo Service Environment.postman_environment.json`) are included at the repository root.
+
+Reviewer Convenience:
+* The collection description mirrors this README for context.
+* Requests already include the Bearer auth placeholder or are wired for the OAuth2 password flow.
+* To authenticate: open the collection's Authorization tab (set to OAuth2), click Get New Access Token (it uses the same token URL `/api/auth/token`), supply `user1` / `Pass@123`, then Postman auto-injects the token into subsequent requests.
+* Environment variables: `base_url`, maybe `access_token` (auto-updated when saving token) — adjust `base_url` if your dev port differs.
+
+This setup minimizes reviewer effort: no manual cURL crafting, single click to authorize and exercise endpoints.
 
 ## Users API (Requires Bearer Token)
 Base Route: `/api/users` (This api were just to manupulate user data via API)

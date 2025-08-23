@@ -10,26 +10,12 @@ public static class MigrationExtensions
     {
         using IServiceScope scope = app.ApplicationServices.CreateScope();
         using ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        if (dbContext.Database.CanConnect())
-        {
-            var pendingMigrations = dbContext.Database.GetPendingMigrations();
-            if (pendingMigrations.Any())
-            {
-                //Migrate Database as the database is already there
-                dbContext.Database.Migrate();
-            }
-        }
-        else
-        {
-            var pendingMigrations = dbContext.Database.GetPendingMigrations();
-            if (pendingMigrations.Any())
-            {
-                //First Migrate then ensure Created to avoid database errors
-                dbContext.Database.Migrate();
 
-                //Ensures that Database is created
-                dbContext.Database.EnsureCreated();
-            }
+        // Apply any pending migrations
+        var pendingMigrations = dbContext.Database.GetPendingMigrations();
+        if (pendingMigrations.Any())
+        {
+            dbContext.Database.Migrate();
         }
     }
 }

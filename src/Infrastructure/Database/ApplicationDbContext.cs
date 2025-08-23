@@ -32,6 +32,35 @@ public sealed class ApplicationDbContext(
 
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        var users = new List<ApplicationUser>
+        {
+            new ApplicationUser
+            {
+                Id = "20c5308c-f997-4747-b90c-db3a0e830f81",
+                UserName = "user1",
+                NormalizedUserName = "USER1",
+                Email = "user1@example.com",
+                NormalizedEmail = "USER1@EXAMPLE.COM",
+                SecurityStamp = "e2986ff7-3cb6-4fd9-ad4e-7665c01db1dd",
+                ConcurrencyStamp = "acc11141-6c70-4ec5-a33c-f9df6fadd952",
+                PasswordHash = "AQAAAAIAAYagAAAAEE5HvjKPN+CAsg8Wr0rqrgbIMw7AjxT9qhFMLS+ZtCeF1Y3nkOAs00jD0MHtRbYpyQ==", // user1@1A
+            },
+            new ApplicationUser
+            {
+                Id = "a1fee97a-5b19-46d4-ab61-29608d0e793a",
+                UserName = "user2",
+                NormalizedUserName = "USER2",
+                Email = "user2@example.com",
+                NormalizedEmail = "USER2@EXAMPLE.COM",
+                SecurityStamp = "64897df1-a13e-40fd-a09b-008cceb3f934",
+                ConcurrencyStamp = "6d9d8935-0ab4-4b5e-9acf-134788e7989e",
+                PasswordHash = "AQAAAAIAAYagAAAAEMgmC5odpySCRAN03w3ynkzPsOcrg2Y/9Nxu2LKlroYlDlsJxj6ZugR5VcOtEguo6w==", // user2@1A
+            }
+        };
+
+        // Seed initial Data
+        modelBuilder.Entity<ApplicationUser>().HasData(users);
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)

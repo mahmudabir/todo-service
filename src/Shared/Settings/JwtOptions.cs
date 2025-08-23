@@ -26,5 +26,4 @@ public sealed class JwtSettings
 
     public string TokenUrl { get; set; } = string.Empty;
     public string TokenRefreshUrl { get; set; } = string.Empty;
-    public string UserInfoUrl { get; set; } = string.Empty;
 }

@@ -14,7 +14,7 @@ public class TodoViewModel
 	[MaxLength(4000)]
 	public string? Description { get; set; }
 
-	public TodoStatus Status { get; set; } = TodoStatus.Pending;
+	public TodoStatus Status { get; set; }
 
 	public DateTime? DueDateUtc { get; set; }
 

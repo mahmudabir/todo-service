@@ -37,8 +37,6 @@ public static class DependencyInjection
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
         services.AddScoped<IHttpContextService, HttpContextService>();
-        services.AddScoped<IFileStoreService, FileStoreService>();
-        services.AddScoped<IHtmlImageProcessorService, HtmlImageProcessorService>();
 
         services.AddScoped<ITodoService, TodoService>();
 

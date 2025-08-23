@@ -23,7 +23,6 @@
         <PackageReference Include="Serilog.AspNetCore"/>
         <PackageReference Include="Serilog.Enrichers.Span" />
         <PackageReference Include="Serilog.Settings.Configuration"/>
-        <PackageReference Include="Serilog.Sinks.Seq"/>
         <PackageReference Include="Swashbuckle.AspNetCore"/>
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
@@ -37,41 +36,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.details\{FeatureName}.details.component.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.details\{FeatureName}.details.component.scss" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.details\{FeatureName}.details.component.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.form\{FeatureName}.form.component.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.form\{FeatureName}.form.component.scss" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.form\{FeatureName}.form.component.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.list\{FeatureName}.list.component.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.list\{FeatureName}.list.component.scss" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\components\{FeatureName}.list\{FeatureName}.list.component.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\models\{FeatureName}.model.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\services\{FeatureName}.service.endpoints.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\services\{FeatureName}.service.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Admin_UI\{FeatureName}\{FeatureName}.routes.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\Mappers\{FeatureName}s\{FeatureName}Mapper.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Create\{FeatureName}CreateCommand.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Create\{FeatureName}CreateCommandHandler.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Create\{FeatureName}CreateValidator.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Delete\{FeatureName}DeleteCommand.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Delete\{FeatureName}DeleteCommandHandler.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\GetById\{FeatureName}GetByIdQuery.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\GetById\{FeatureName}GetByIdQueryHandler.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Get\{FeatureName}GetQuery.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Get\{FeatureName}GetQueryHandler.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Patch\{FeatureName}PatchCommand.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Patch\{FeatureName}PatchCommandHandler.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Update\{FeatureName}UpdateCommand.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Update\{FeatureName}UpdateCommandHandler.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Application\UseCases\{FeatureName}s\Update\{FeatureName}UpdateValidator.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Domain\Abstractions\Database\Repositories\I{FeatureName}Repository.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Domain\Entities\{FeatureName}s\{FeatureName}.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Domain\Entities\{FeatureName}s\{FeatureName}Errors.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Infrastructure\Database\{FeatureName}s\{FeatureName}Configuration.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Infrastructure\Database\{FeatureName}s\{FeatureName}Repository.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\Shared\Models\{FeatureName}s\{FeatureName}ViewModel.cs" />
-      <_ContentIncludedByDefault Remove="wwwroot\Feature_Template\WebApi\Controllers\{FeatureName}s\{FeatureName}sController.cs" />
+      <Folder Include="wwwroot\" />
     </ItemGroup>
 
 </Project>

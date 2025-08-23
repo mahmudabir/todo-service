@@ -16,5 +16,18 @@ public class TodoProfile : Profile
             .ForMember(dest => dest.CreatedAtUtc, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAtUtc, opt => opt.Ignore())
             .ForMember(dest => dest.UserId, opt => opt.Ignore());
+
+        CreateMap<Todo, TodoCreateViewModel>()
+            .ReverseMap()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAtUtc, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedAtUtc, opt => opt.Ignore())
+            .ForMember(dest => dest.UserId, opt => opt.Ignore());
+
+        CreateMap<Todo, TodoUpdateViewModel>()
+            .ReverseMap()
+            .ForMember(dest => dest.CreatedAtUtc, opt => opt.Ignore())
+            .ForMember(dest => dest.UpdatedAtUtc, opt => opt.Ignore())
+            .ForMember(dest => dest.UserId, opt => opt.Ignore());
     }
 }

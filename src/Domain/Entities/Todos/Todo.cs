@@ -38,7 +38,8 @@ public class Todo : Entity
     /// <summary>
     /// Soft completion flag (derived convenience of Status == Completed but stored for fast queries).
     /// </summary>
-    public bool IsCompleted { get; set; }
+    [NotMapped]
+    public bool IsCompleted => Status == TodoStatus.Completed;
 
     /// <summary>
     /// UTC timestamps for auditing.

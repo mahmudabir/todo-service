@@ -2,7 +2,5 @@
 
 public interface IHttpContextService
 {
-    public string GetAcceptLanguage();
-
     public string? GetCurrentUserIdentity();
 }

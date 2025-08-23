@@ -23,8 +23,6 @@ public static class DependencyInjection
         services.AddApiControllers()
                 .AddJsonOptions();
 
-        // Register AutoMapper once with all target assemblies. Calling AddAutoMapper multiple times can
-        // override previous configuration, resulting in missing profiles (e.g. Application profiles not found).
         services.AddAutoMapper(
             typeof(IApplicationMarker).Assembly,
             typeof(ISharedMarker).Assembly
@@ -40,7 +38,7 @@ public static class DependencyInjection
                                         .SetIsOriginAllowed((host) => true)
                                         .AllowCredentials();
 
-                                 builder.WithOrigins("https://localhost:4200")
+                                 builder.WithOrigins("*")
                                         .AllowAnyHeader()
                                         .AllowAnyMethod()
                                         .SetIsOriginAllowed((host) => true)

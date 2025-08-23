@@ -1,5 +1,7 @@
 ﻿using Domain.Abstractions.Services;
 
+using FluentValidation;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,13 +35,16 @@ public class TodosController(ITodoService todoService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Result<TodoViewModel>>> Post([FromBody] TodoViewModel payload,
+    public async Task<ActionResult<Result<TodoViewModel>>> Post([FromBody] TodoCreateViewModel payload,
+                                                                [FromServices] IValidator<TodoCreateViewModel> validator,
                                                                 CancellationToken cancellationToken)
     {
-        if (!TryValidateModel(payload))
+        var validationResult = validator.Validate(payload);
+        if (!validationResult.IsValid)
         {
-            return Ok(Result<TodoViewModel>.Error()
-                                           .WithMessage("Validation failure"));
+            return Result<TodoViewModel>.Error()
+                                        .WithMessage("Validation failure")
+                                        .WithErrors(validationResult.ToDictionary());
         }
         var result = await todoService.CreateTodoAsync(payload, cancellationToken);
         return Ok(result);
@@ -47,14 +52,18 @@ public class TodosController(ITodoService todoService) : ControllerBase
 
     [HttpPut("{id:long}")]
     public async Task<ActionResult<Result<TodoViewModel>>> Put([FromRoute] long id,
-                                                               [FromBody] TodoViewModel payload,
+                                                               [FromBody] TodoUpdateViewModel payload,
+                                                               [FromServices] IValidator<TodoUpdateViewModel> validator,
                                                                CancellationToken cancellationToken)
     {
-        if (!TryValidateModel(payload))
+        var validationResult = validator.Validate(payload);
+        if (!validationResult.IsValid)
         {
-            return Ok(Result<TodoViewModel>.Error()
-                                           .WithMessage("Validation failure"));
+            return Result<TodoViewModel>.Error()
+                                        .WithMessage("Validation failure")
+                                        .WithErrors(validationResult.ToDictionary());
         }
+
         var result = await todoService.UpdateTodoAsync(id, payload, cancellationToken);
         return Ok(result);
     }

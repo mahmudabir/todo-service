@@ -4,11 +4,10 @@ namespace Shared.Pagination;
 
 public class Pageable
 {
-    private int _defaultPageSize = 20;
+    private int _defaultPageSize = 10;
     private int _defaultPageNumber = 1;
 
     public bool AsPage { get; set; } = true;
-    public bool AsDropdown { get; set; } = false;
 
     public int PageNumber
     {
@@ -30,7 +29,7 @@ public class Pageable
         }
         set
         {
-            _defaultPageSize = value <= 0 ? 20 : value;
+            _defaultPageSize = value <= 0 ? 10 : value;
         }
     }
 

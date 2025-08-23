@@ -19,13 +19,16 @@ namespace Infrastructure.Database;
 
 public sealed class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options,
+    IHttpContextService httpContextService,
     ILogger<ApplicationDbContext> logger)
     : IdentityDbContext<ApplicationUser, IdentityRole, string>(options),
       IUnitOfWork
 {
+    public string? CurrentUserId = httpContextService.GetCurrentUserIdentity();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Todo>().ToTable(Tables.Todos);
+        modelBuilder.ApplyUserGlobalQueryFilter(this);
 
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);

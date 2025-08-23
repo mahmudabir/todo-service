@@ -26,11 +26,9 @@ public class UsersController(ApplicationDbContext context, UserManager<Applicati
     [HttpGet]
     public async Task<ActionResult<Result<List<User>>>> Get([FromQuery] string q = null, CancellationToken ct = default)
     {
-        Expression<Func<ApplicationUser, bool>> predicate = (x) => string.IsNullOrEmpty(q)
-            ? true
-            : EF.Functions.Like(x.UserName, $"%{q}%") ||
-              EF.Functions.Like(x.Email, $"%{q}%") ||
-              EF.Functions.Like(x.PhoneNumber, $"%{q}%");
+        Expression<Func<ApplicationUser, bool>> predicate = (x) => string.IsNullOrEmpty(q) || (EF.Functions.Like(x.UserName, $"%{q}%") ||
+                                                                                               EF.Functions.Like(x.Email, $"%{q}%") ||
+                                                                                               EF.Functions.Like(x.PhoneNumber, $"%{q}%"));
 
         var queryable = context.Users
                                .Where(predicate);

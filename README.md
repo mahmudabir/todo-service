@@ -17,16 +17,15 @@
 	- Environment / Configuration
 - Seeded Users (Test Credentials)
 - Authentication & Authorization
-	- Password Grant (Form) `/api/auth/token`
-	- Login Alias (JSON) `/api/auth/login`
-	- Refresh Token `/api/auth/token`
 	- Signup `/api/auth/signup`
+	- Login Alias (JSON) `/api/auth/login`
+	- Password Grant (Form) `/api/auth/token`
+	- Refresh Token `/api/auth/token`
 - Users API
 - Todos API
 - Pagination & Sorting
 - Validation
 - Logging & Observability
-- Roadmap / Ideas
 
 ---
 
@@ -124,10 +123,10 @@ Key section: `JwtSettings` in `appsettings.json`:
 Migration `20250823141729_User_Seed` inserts two users:
 | Username | Email             | Password (raw) |
 |----------|-------------------|----------------|
-| user1    | user1@example.com | Pass@123       |
-| user2    | user2@example.com | Pass@123       |
+| user1    | user1@example.com | user1@1A       |
+| user2    | user2@example.com | user2@1A      |
 
-> NOTE: Password hash in migration corresponds to the demonstrated raw password `Pass@123`. If login fails, reset passwords via Identity management or recreate migration.
+> NOTE: Password hash in migration corresponds to the demonstrated raw password `user1@1A` & `user2@1A`. If login fails, reset passwords via Identity management or recreate migration.
 
 ## Authentication & Authorization
 Bearer Authentication: obtain Access + Refresh tokens, then include:
@@ -181,7 +180,8 @@ Common Errors:
 ### 1a. JSON Login Alias – POST `/api/auth/login`
 Body:
 ```json
-{ "username": "user1", "password": "Pass@123" }
+{ "username": "user1", "password": "user1@1A" }
+{ "username": "user2", "password": "user2@1A" }
 ```
 Response: same as password grant above.
 

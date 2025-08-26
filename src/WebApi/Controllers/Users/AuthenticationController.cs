@@ -367,10 +367,11 @@ public class AuthenticationController(
         }
     }
 
-    private bool IsBasicHeaderValid(string basicHeader)
+    private bool IsBasicHeaderValid(string? basicHeader)
     {
         try
         {
+            if (string.IsNullOrEmpty(basicHeader)) return false;
             if (basicHeader.Contains(' '))
             {
                 basicHeader = basicHeader.Split(' ')[1];

@@ -15,10 +15,13 @@ public class TokenRequest
 
     public string? Scope { get; set; } = "apiScope";
 
+    [FromForm(Name = "client_id")]
     public string? ClientId { get; set; }
 
+    [FromForm(Name = "client_secret")]
     public string? ClientSecret { get; set; }
 
+    [FromHeader]
     public string? Authorization { get; set; }
 
     [RegularExpression("^(password|refresh_token)$", ErrorMessage = "Invalid grant type.")]

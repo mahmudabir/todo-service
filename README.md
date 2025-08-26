@@ -93,7 +93,7 @@ Adjust connection string in `src/WebApi/appsettings.Development.json` or `appset
 ```powershell
 dotnet run --project src/WebApi
 ```
-The API will typically listen on https://localhost:5001 and http://localhost:5000 (exact ports depend on your profile). Swagger UI (Development) at `/swagger`.
+The API will typically listen on http://localhost:5000. Swagger UI (Development) at `/swagger`.
 
 ### 5. Environment / Configuration
 Key section: `JwtSettings` in `appsettings.json`:
